@@ -1,0 +1,9 @@
+<Project>
+    <!--
+      若你的 Godot.NET.Sdk 建置需要指定編輯器執行檔路徑，把下面改成你機器上的實際路徑；
+      不需要的話這個檔案留著也沒關係（原模組的專案也有一份同樣的檔案）。
+    -->
+    <PropertyGroup>
+        <GodotPath>C:/megadot/MegaDot_v4.5.1-stable_mono_win64.exe</GodotPath>
+    </PropertyGroup>
+</Project>

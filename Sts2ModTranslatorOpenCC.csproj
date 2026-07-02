@@ -1,0 +1,82 @@
+<Project Sdk="Godot.NET.Sdk/4.5.1" InitialTargets="CheckDependencyPaths">
+    <Import Project=".\Sts2PathDiscovery.props"/>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>true</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>Sts2ModTranslatorOpenCC</RootNamespace>
+        <AssemblyName>Sts2ModTranslatorOpenCC</AssemblyName>
+        <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
+        <PathMap>$(AppOutputBase)=.\</PathMap>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <NoWarn>$(NoWarn);MSB3270</NoWarn>
+    </PropertyGroup>
+
+    <!-- 遊戲本體 + Harmony：跟原模組一樣的做法（Private=false，只拿來編譯，不會被複製進輸出）。 -->
+    <ItemGroup Condition="Exists('$(Sts2DataDir)')">
+        <Reference Include="0Harmony">
+            <HintPath>$(Sts2DataDir)/0Harmony.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="sts2">
+            <HintPath>$(Sts2DataDir)/sts2.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <!--
+      關鍵：只「引用」STS2 Mod Translator 已經建置好的 dll 來解析型別做編譯用途。
+      Private=false 代表 build 完不會把 Sts2ModTranslator.dll 複製進本模組的輸出資料夾——
+      也就是「不包含他的 dll 本體」。執行期我們仍能呼叫到它，因為遊戲會先載入
+      Sts2ModTranslator（見下方 manifest 的 dependencies），到時它的型別本來就已經在記憶體裡了。
+    -->
+    <ItemGroup Condition="Exists('$(ModsPath)Sts2ModTranslator/Sts2ModTranslator.dll')">
+        <Reference Include="Sts2ModTranslator">
+            <HintPath>$(ModsPath)Sts2ModTranslator/Sts2ModTranslator.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="All"/>
+        <!-- 簡繁轉換引擎（純 C#、內建 OpenCC 詞庫、支援 net9.0）。若你想改用別的 OpenCC 套件，
+             換掉這個 PackageReference 並調整 Core/OpenCcBridge.cs 即可，其餘程式碼不用動。 -->
+        <PackageReference Include="OpenccNetLib" Version="1.4.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Publicize Include="sts2" IncludeVirtualMembers="false" IncludeCompilerGeneratedMembers="false" />
+        <!-- 把 Sts2ModTranslator 內部 private static 的欄位/方法（_content、_mod、SetStatus、Confirm…）
+             在編譯期當作 public 看待，這樣才能直接把按鈕插進他既有的面板，完全不用改他的原始碼。 -->
+        <Publicize Include="Sts2ModTranslator" IncludeVirtualMembers="false" IncludeCompilerGeneratedMembers="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Sts2ModTranslatorOpenCC.json" />
+    </ItemGroup>
+
+    <Target Name="CheckDependencyPaths">
+        <Error Text=" Slay the Spire 2 data not found at path '$(Sts2DataDir)'"
+               Condition="'$(Sts2DataDir)' == '' or !Exists('$(Sts2DataDir)')" />
+        <Error Text=" 找不到 $(ModsPath)Sts2ModTranslator/Sts2ModTranslator.dll — 請先建置/安裝原本的 Sts2ModTranslator 模組"
+               Condition="!Exists('$(ModsPath)Sts2ModTranslator/Sts2ModTranslator.dll')" />
+    </Target>
+
+    <!--
+      跟原模組不同的地方：原模組沒有任何執行期 NuGet 相依套件，所以它只複製單一 dll。
+      我們有 OpenccNetLib（可能還有它自己的詞庫資料檔），所以要把整個輸出資料夾複製過去，
+      不然遊戲載入我們的 dll 時會因為找不到相依檔案而失敗。
+    -->
+    <Target Name="CopyToModsFolderOnBuild" AfterTargets="PostBuildEvent">
+        <ItemGroup>
+            <Sts2OpenCCOutputFiles Include="$(OutDir)**\*.*" Exclude="$(OutDir)**\*.pdb" />
+        </ItemGroup>
+        <Message Text="Copying build output (dll + OpenCC dictionaries) to mods folder." Importance="high" />
+        <Copy SourceFiles="@(Sts2OpenCCOutputFiles)"
+              DestinationFolder="$(ModsPath)$(MSBuildProjectName)/%(RecursiveDir)" />
+        <Copy SourceFiles="$(AssemblyName).json" DestinationFolder="$(ModsPath)$(MSBuildProjectName)/" />
+    </Target>
+</Project>
