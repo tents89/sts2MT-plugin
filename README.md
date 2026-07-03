@@ -5,6 +5,7 @@
 本模組於 [Sts2ModTranslator](https://steamcommunity.com/sharedfiles/filedetails/?id=3752522987) 面板的「Install as mod」按鈕旁新增了一顆 **「簡轉繁」** 按鈕。其功能為一鍵將目前選定模組的 `zhs` 覆寫檔內容由簡體中文轉換為繁體中文，直接存檔並套用，同時支援疊加使用者自訂字典（已經內建部分詞彙）。
 
 > **架構說明**
+>
 > 由於目前遊戲僅內建 `zhs`（簡體中文）語系，尚未獨立支援 `zht`（繁體中文），因此本外掛的運作邏輯為：**直接將簡體中文內容轉換為繁體字，並覆寫回原 `zhs` 覆寫檔案中**，而非另建 `zht` 語系。
 
 ---
@@ -108,4 +109,11 @@ dotnet build -c Release
 
 
 建置腳本會自動將 `Sts2ModTranslatorOpenCC.dll` 與 `Sts2ModTranslatorOpenCC.json` 複製至 `<STS2>/mods/Sts2ModTranslatorOpenCC/`。
-4. **啟用**：啟動遊戲後，請於模組管理器中同時勾選並啟用這兩個模組。
+4. **啟用**：啟動遊戲後，請於模組管理器中同時勾選並啟用這兩個模組才會生效。
+
+## Credit
+
+| 名稱 | 用途 |
+| ---------- | ---------- |
+| [Sts2ModTranslator](https://github.com/ing-gom/sts2-mod-translator) | 依賴 |
+| [OpenCC](https://github.com/BYVoid/OpenCC) | 利用其字典 |
