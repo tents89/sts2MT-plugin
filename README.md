@@ -1,4 +1,4 @@
-# Sts2ModTranslatorOpenCC 說明文件
+# Sts2ModTranslator - OpenCC 說明文件
 > [!Note]
 > `Sts2ModTranslatorOpenCC` 是專為 `Sts2ModTranslator` 開發的附加外掛模組（僅對其相依）。
 
