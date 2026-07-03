@@ -1,111 +1,111 @@
-# Sts2ModTranslatorOpenCC
+# Sts2ModTranslatorOpenCC 說明文件
+> [!Note]
+> `Sts2ModTranslatorOpenCC` 是專為 `Sts2ModTranslator` 開發的附加外掛模組（僅對其相依）。
 
-STS2 Mod Translator 的附加外掛（不含它的 dll，只依賴它）。
-在它的面板裡「Install as mod」按鈕旁邊加一顆 **簡轉繁** 按鈕：一鍵把目前選定模組的
-`zhs` 覆寫檔內容從簡體轉成繁體，直接存檔並套用，還可以疊加你自己的自訂字典。
+本模組於 [Sts2ModTranslator](https://steamcommunity.com/sharedfiles/filedetails/?id=3752522987) 面板的「Install as mod」按鈕旁新增了一顆 **「簡轉繁」** 按鈕。其功能為一鍵將目前選定模組的 `zhs` 覆寫檔內容由簡體中文轉換為繁體中文，直接存檔並套用，同時支援疊加使用者自訂字典（已經內建部分詞彙）。
 
-> 遊戲目前只有 `zhs` 這個中文語系，沒有獨立的 `zht`，所以這個外掛是**直接把 zhs 覆寫檔的內容
-> 換成繁體字後存回同一個檔案**，而不是另外開一個 zht 語系。以後如果遊戲加了 zht，這裡要跟著調整。
+> **架構說明**
+> 由於目前遊戲僅內建 `zhs`（簡體中文）語系，尚未獨立支援 `zht`（繁體中文），因此本外掛的運作邏輯為：**直接將簡體中文內容轉換為繁體字，並覆寫回原 `zhs` 覆寫檔案中**，而非另建 `zht` 語系。
 
-## 這個版本的關鍵改動：不再依賴外部 NuGet 套件
+---
 
-最早的版本用 `OpenccNetLib` 這個 NuGet 套件做簡轉繁，結果遊戲載入時噴：
+## 核心設計：不依賴外部 NuGet 套件
 
-```
-[ERROR] System.IO.FileNotFoundException: Could not load file or assembly 'OpenccNetLib, ...'
-```
+在早期版本中，本模組採用 `OpenccNetLib` 套件進行簡轉繁，但於遊戲載入時會觸發 `System.IO.FileNotFoundException` 錯誤。
 
-且整個遊戲直接起不來。原因是：STS2 的 mod 載入機制看起來只認「單一 dll」，不會像一般
-.NET 程式那樣自動去同一個資料夾找相依的 dll，所以只要 mod 的 dll 依賴了另一顆額外的 dll
-（哪怕就放在同一層），載入當下就可能直接炸掉、而且看起來沒有妥善的錯誤隔離（一個 mod
-爆掉會拖累整個遊戲起不來），沒辦法單純用「早一點註冊 AssemblyResolve」這種技巧補救。
+### 錯誤原因
 
-同時，原本的建置腳本會把 NuGet 套件連帶產生的 `Sts2ModTranslatorOpenCC.deps.json` 等
-建置產物也複製進 mods 資料夾，而遊戲的 mod 掃描器似乎會去讀資料夾裡「每一個」`.json`
-當作 manifest 解析，讀到看不懂的 json 就在 log 裡報錯。
+1. **單一 DLL 機制**：遊戲的模組載入機制僅識別「單一主 DLL」，無法自動搜尋並讀取同目錄下的相依性 DLL。
+2. **錯誤隔離缺乏**：單一模組載入失敗會導致整體遊戲無法啟動，無法透過常規的 `AssemblyResolve` 註冊機制進行補救。
+3. **組態檔案干擾**：建置時產生的 `*.deps.json` 等檔案會被遊戲的模組掃描器視為 manifest 解析，進而引發錯誤記錄。
 
-**這個版本的解法：把簡轉繁需要的字典資料直接內嵌進本模組的 dll 裡**（`Dict/*.txt`，
-OpenCC 官方字典的原始文字檔，Apache-2.0 授權，見 `THIRD_PARTY_NOTICES.md`），
-自己用純 C# 寫一個最長匹配的分段轉換引擎（`Core/OpenCcEngine.cs`），完全不吃任何
-外部 dll。輸出資料夾現在只會有：
+### 解決方案
 
-```
+本模組將 OpenCC 官方字典原始文字檔（`Dict/*.txt`，基於 Apache-2.0 授權）**直接內嵌至模組的 DLL 中**，並於 `Core/OpenCcEngine.cs` 實作純 C# 的「最長匹配分段轉換引擎」，完全移除了外部 DLL 相依性。
+
+**輸出目錄結構：**
+
+```text
 mods/Sts2ModTranslatorOpenCC/
-├── Sts2ModTranslatorOpenCC.dll
-├── Sts2ModTranslatorOpenCC.json   <- 唯一的 manifest
-└── CustomDict.txt                  <- 第一次執行後自動產生
-```
-
-跟原本能正常運作的 `Sts2ModTranslator` 資料夾長得一模一樣（一顆 dll + 一份 json），
-不會再有找不到相依 dll、或多餘 json 被誤判的問題。`csproj` 也明確關掉了
-`GenerateDependencyFile` / `GenerateRuntimeConfigurationFiles`，並把複製建置產物的
-target 改成只複製 `TargetPath`（主 dll）跟 manifest 這兩個檔案，不再整批複製輸出資料夾。
-
-## 轉換品質 vs. 真正的 OpenCC 函式庫
-
-`Core/OpenCcEngine.cs` 重現的是 OpenCC 官方 `s2tw.json` 設定檔描述的轉換鏈（標準簡轉繁，
-只轉字形、不做詞彙在地化，例如「软件」只會變成「軟件」不會變成「軟體」）：
-
-1. 簡體 → 繁體標準字：`STPhrases`（詞語，優先） → `STCharacters`（單字，備援）
-2. 繁體標準字 → 台灣正體字形：`TWVariantsPhrases` → `TWVariants`
-
-每一段都是「由左到右掃描、每個位置在字典群組裡找最長匹配、找不到就換下一個字典、
-全部找不到就照原字輸出」，字典資料直接來自 OpenCC 官方 repo。這對絕大部分文字都會給出
-跟真正的 OpenCC 函式庫一致或非常接近的結果，少數落差用 `CustomDict.txt` 修正即可。
-
-## 建置
-
-1. 先確定 `Sts2ModTranslator` 這個原模組已經建置/安裝在 `<STS2>/mods/Sts2ModTranslator/`（要有
-   `Sts2ModTranslator.dll`）。
-2. 這個專案現在**不需要**連外網還原任何執行期 NuGet 套件（`Krafs.Publicizer` 只在編譯期用，
-   不會被複製進輸出）。
-3. 跟原模組一樣：
-
-   ```
-   dotnet build -c Release
-   ```
-
-   會把 `Sts2ModTranslatorOpenCC.dll` + `Sts2ModTranslatorOpenCC.json` 複製到
-   `<STS2>/mods/Sts2ModTranslatorOpenCC/`。用 Godot 編輯器內建的建置按鈕建置也一樣會跑這個
-   複製步驟（`AfterTargets="PostBuildEvent"`），只是輸出資料夾路徑可能落在
-   `.godot/mono/temp/bin/...` 而不是一般的 `bin/Release/net9.0/`，正常情況下不影響複製結果。
-
-4. 啟動遊戲，兩個模組都要打勾啟用。進 Mod Translator 面板 → 點一個模組 → 語言列表頁最下面，
-   「Install as mod」旁邊會多一顆「簡轉繁」。
-
-## 按下「簡轉繁」會發生什麼事
-
-在模組列表頁（模組 ▸ 語言列表那頁，Install as mod 旁邊）按下「簡轉繁」，一鍵做完：
-
-1. 對這個模組的每一個檔案，讀取 **Reference(zhs)**——也就是模組自己內建的簡體中文原文
-   （不是別人上傳的翻譯包，也不是你現有的 zhs 覆寫檔）。
-2. 逐值跑過簡轉繁（OpenCC s2tw + 你的自訂字典）。
-3. **不管 Translation(zhs) 原本有沒有內容，直接覆蓋**，存進 zhs 覆寫檔並立即套用到遊戲。
-
-如果這個模組本身沒有內建 zhs 原文可以當 Reference，就沒有東西可以轉換，按了也不會有效果
-（狀態列會顯示原因）。這是**會覆蓋、且無法復原**的動作，按下去前會跳確認框，建議先用
-面板上的 Open Folder 備份一下 `overrides` 資料夾。
-
-## 自訂字典
-
-第一次執行後，模組資料夾裡會自動產生 `CustomDict.txt`（跟 dll 放在一起），格式：
+├── Sts2ModTranslatorOpenCC.dll   (主程式)
+├── Sts2ModTranslatorOpenCC.json  (唯一的 Manifest)
+└── CustomDict.txt                (首次執行後自動產生)
 
 ```
-# 開頭是註解
+
+專案組態（`csproj`）已明確關閉 `GenerateDependencyFile` 與 `GenerateRuntimeConfigurationFiles`，建置目標（Target）設定為僅複製主 DLL 與 JSON Manifest，確保目錄乾淨。
+
+---
+
+## 轉換機制與品質
+
+本模組重現了 OpenCC 官方 `s2tw.json`（標準簡轉繁，僅轉換字形，不做詞彙在地化）的轉換鏈：
+
+```
+[簡體文字] 
+   │
+   ▼
+(Pass 1) 轉換為繁體標準字：優先比對 STPhrases (詞語) ──> 備援比對 STCharacters (單字)
+   │
+   ▼
+(Pass 2) 轉換為台灣正體字形：優先比對 TWVariantsPhrases ──> 備援比對 TWVariants
+   │
+   ▼
+(Pass 3) 套用自訂字典
+   │
+   ▼
+[繁體文字輸出]
+
+```
+
+* **演算法**：由左至右掃描，於各位置之字典群組中搜尋最長匹配（Longest Match）。若查無對應則遞補至下一字典；皆無匹配則保留原字輸出。
+* **品質**：轉換結果與官方 OpenCC 基礎函式庫高度一致。少數特殊用字或詞彙差異可透過 `CustomDict.txt` 進行校正。
+
+---
+
+## 執行流程
+
+於模組語言列表頁面按下「簡轉繁」按鈕後，系統將依序執行以下作業：
+
+1. **讀取原文**：讀取該模組內建的簡體中文原文（即 `Reference(zhs)`，非第三方翻譯包或現存的覆寫檔）。
+2. **文本轉換**：批次進行簡轉繁運算（結合 OpenCC s2tw 規範與 `CustomDict.txt` 自訂字典）。
+3. **覆寫套用**：**不論 `Translation(zhs)` 當前是否有內容，均直接覆蓋**，寫入 `zhs` 覆寫檔並即時套用至遊戲。
+
+> **注意事項**
+> * 若模組本身未內建 `zhs` 原文字源，則無法執行轉換（狀態列將提示原因）。
+> * 本操作具**不可逆性（會直接覆蓋現存檔案）**，執行前會跳出確認提示。建議先透過面板的「Open Folder」功能備份 `overrides` 資料夾。
+> 
+> 
+
+---
+
+## 自訂字典 (`CustomDict.txt`)
+
+首次執行模組後，系統將於 DLL 同級目錄下自動生成 `CustomDict.txt`。
+
+* **相容格式**：
+```text
+# 每行開頭為「#」代表註解
 軟件=軟體
+
 ```
 
-每行 `OpenCC 轉換後看到的文字=想換成的文字`。這是在 OpenCC 轉換**完成之後**才套用的
-單純找字換字，適合拿來修正角色名、卡牌名，或是把 `s2tw` 沒轉的詞彙（像上面例子的
-軟件→軟體）手動補上。改完存檔，重啟遊戲即可生效
-（要熱重載可以在 `OpenCcBridge.ReloadCustomDict()` 上面掛個按鈕）。
 
-## 想換轉換標準？
+* **運作邏輯**：此設定是在 OpenCC 標準轉換**完成之後**才執行的全域替換（純字串取代）。適用於修正特定角色名稱、卡牌名稱，或將標準字形轉換為在地化詞彙（例如：將「軟件」修正為「軟體」）。
+* **套用方式**：修改並儲存檔案後，重啟遊戲即可生效。
 
-目前固定走 `s2tw`（簡體 → 台灣正體，只轉字形）。想換成 `s2twp`（多一段台灣慣用詞彙
-在地化，例如软件→軟體、鼠标→滑鼠）的話：去
-`https://raw.githubusercontent.com/BYVoid/OpenCC/master/data/dictionary/TWPhrases.txt`
-抓這個字典檔放進 `Dict/` 資料夾、csproj 的 `EmbeddedResource` 清單裡加一條，再把
-`Core/OpenCcEngine.cs` 加回 `_twPhrases` 欄位、載入、`Convert()` 的 pass2 呼叫（放在
-`_twVariantsPhrases` 前面）即可；要支援香港繁體（`s2hk`）則需要另外抓
-`HKVariants.txt` 之類的字典，比照現有模式加一段轉換鏈。
+---
+
+## 建置與部署
+
+1. **環境確認**：確保原模組已正確放置於 `<STS2>/mods/Sts2ModTranslator/`（須包含 `Sts2ModTranslator.dll`）。
+2. **相依性**：本專案編譯期間無須從外部還原任何執行期 NuGet 套件（`Krafs.Publicizer` 僅供編譯期使用，不會被封裝輸出）。
+3. **編譯指令**：
+```bash
+dotnet build -c Release
+
+```
+
+
+建置腳本會自動將 `Sts2ModTranslatorOpenCC.dll` 與 `Sts2ModTranslatorOpenCC.json` 複製至 `<STS2>/mods/Sts2ModTranslatorOpenCC/`。
+4. **啟用**：啟動遊戲後，請於模組管理器中同時勾選並啟用這兩個模組。
