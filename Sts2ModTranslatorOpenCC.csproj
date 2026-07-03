@@ -12,7 +12,19 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <NoWarn>$(NoWarn);MSB3270</NoWarn>
+        <!-- CS0436: 跟 Sts2ModTranslator 各自獨立產生的 Publicizer/Godot 樣板型別撞名的無害警告，見 README。 -->
+        <NoWarn>$(NoWarn);MSB3270;CS0436</NoWarn>
+    </PropertyGroup>
+
+    <!--
+      這個模組刻意「零執行期 NuGet 相依套件」：簡轉繁字典是內嵌資源（見 Dict/），不是外部 dll，
+      跟遊戲原本讀取 mods 資料夾的方式最相容——輸出資料夾裡只會有一顆 dll + 一份 manifest json，
+      形狀跟原本能正常運作的 Sts2ModTranslator 一模一樣。同時明確關掉 deps.json / runtimeconfig.json
+      的產生，避免遊戲的 mod 掃描器讀到「看不懂的 json」而報錯。
+    -->
+    <PropertyGroup>
+        <GenerateDependencyFile>false</GenerateDependencyFile>
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
     <!-- 遊戲本體 + Harmony：跟原模組一樣的做法（Private=false，只拿來編譯，不會被複製進輸出）。 -->
@@ -41,10 +53,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- 只在編譯期用，PrivateAssets=All 代表不會產生任何執行期相依，也不會被複製進輸出。 -->
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="All"/>
-        <!-- 簡繁轉換引擎（純 C#、內建 OpenCC 詞庫、支援 net9.0）。若你想改用別的 OpenCC 套件，
-             換掉這個 PackageReference 並調整 Core/OpenCcBridge.cs 即可，其餘程式碼不用動。 -->
-        <PackageReference Include="OpenccNetLib" Version="1.4.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -52,6 +62,25 @@
         <!-- 把 Sts2ModTranslator 內部 private static 的欄位/方法（_content、_mod、SetStatus、Confirm…）
              在編譯期當作 public 看待，這樣才能直接把按鈕插進他既有的面板，完全不用改他的原始碼。 -->
         <Publicize Include="Sts2ModTranslator" IncludeVirtualMembers="false" IncludeCompilerGeneratedMembers="false" />
+    </ItemGroup>
+
+    <!--
+      簡轉繁字典：OpenCC 官方字典的原始文字檔（Apache-2.0 授權，見 THIRD_PARTY_NOTICES.md），
+      內嵌進本組件（EmbeddedResource），不會以外部檔案形式出現在輸出資料夾。
+    -->
+    <ItemGroup>
+        <EmbeddedResource Include="Sts2ModTranslatorOpenCCCode\Dict\STCharacters.txt">
+            <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.STCharacters.txt</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Sts2ModTranslatorOpenCCCode\Dict\STPhrases.txt">
+            <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.STPhrases.txt</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Sts2ModTranslatorOpenCCCode\Dict\TWVariants.txt">
+            <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariants.txt</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Sts2ModTranslatorOpenCCCode\Dict\TWVariantsPhrases.txt">
+            <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariantsPhrases.txt</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -66,17 +95,13 @@
     </Target>
 
     <!--
-      跟原模組不同的地方：原模組沒有任何執行期 NuGet 相依套件，所以它只複製單一 dll。
-      我們有 OpenccNetLib（可能還有它自己的詞庫資料檔），所以要把整個輸出資料夾複製過去，
-      不然遊戲載入我們的 dll 時會因為找不到相依檔案而失敗。
+      只複製「我們確定要的東西」：主 dll + manifest json。不整批複製輸出資料夾，
+      避免任何未來 SDK 更新自動多產生的雜項檔案（deps.json / runtimeconfig.json / xml 文件等）
+      混進 mods 資料夾、被遊戲的 mod 掃描器誤判成壞掉的 manifest。
     -->
     <Target Name="CopyToModsFolderOnBuild" AfterTargets="PostBuildEvent">
-        <ItemGroup>
-            <Sts2OpenCCOutputFiles Include="$(OutDir)**\*.*" Exclude="$(OutDir)**\*.pdb" />
-        </ItemGroup>
-        <Message Text="Copying build output (dll + OpenCC dictionaries) to mods folder." Importance="high" />
-        <Copy SourceFiles="@(Sts2OpenCCOutputFiles)"
-              DestinationFolder="$(ModsPath)$(MSBuildProjectName)/%(RecursiveDir)" />
+        <Message Text="Copying dll + manifest to mods folder." Importance="high" />
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsPath)$(MSBuildProjectName)/" />
         <Copy SourceFiles="$(AssemblyName).json" DestinationFolder="$(ModsPath)$(MSBuildProjectName)/" />
     </Target>
 </Project>

@@ -45,7 +45,7 @@ public static class TranslatorPanelBuildLanguagesPatch
                 Name = "Sts2OpenCCButton",
                 Text = "簡轉繁",
                 CustomMinimumSize = new Vector2(110, 40),
-                TooltipText = "用 OpenCC 把這個模組目前的 zhs 覆寫檔從簡體轉換為繁體，並直接存檔套用。",
+                TooltipText = "對該模組的 zhs 文本進行簡轉繁，此操作會自動覆蓋並存檔。",
             };
             btn.AddThemeFontSizeOverride("font_size", 18);
             btn.Pressed += () => OnPressed(mod);
@@ -60,9 +60,8 @@ public static class TranslatorPanelBuildLanguagesPatch
     private static void OnPressed(Sts2ModTranslator.Core.SupportedMod mod)
     {
         TranslatorPanel.Confirm(
-            "簡轉繁 (OpenCC)",
-            $"將「{mod.Name}」目前的 zhs 覆寫檔內容從簡體轉換為繁體中文，並直接覆寫存檔、套用到遊戲中。"
-            + "此動作無法復原（建議先按 Open Folder 備份 overrides 資料夾）。要繼續嗎？",
+            "簡轉繁",
+            $"把「{mod.Name}」的 zhs 原文轉繁體，此操作會自動覆蓋並存檔。要繼續嗎？",
             "轉換並儲存",
             () => ZhsConverter.ConvertAndSave(mod));
     }
