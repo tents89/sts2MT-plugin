@@ -1,6 +1,6 @@
 # Sts2ModTranslator - OpenCC 說明文件
-> [!Note]
-> `Sts2ModTranslatorOpenCC` 是專為 `Sts2ModTranslator` 開發的附加外掛模組（僅對其相依）。
+> [!IMPORTANT]
+> `Sts2ModTranslatorOpenCC` 是專為 `Sts2ModTranslator` 開發的附加外掛模組（僅依賴）。
 
 本模組於 [Sts2ModTranslator](https://steamcommunity.com/sharedfiles/filedetails/?id=3752522987) 面板的「Install as mod」按鈕旁新增了一顆 **「簡轉繁」** 按鈕。其功能為一鍵將目前選定模組的 `zhs` 覆寫檔內容由簡體中文轉換為繁體中文，會直接存檔並套用，同時支援疊加使用者自訂字典（已經內建部分詞彙），完成後即可關閉視窗。
 
@@ -12,15 +12,12 @@
 
 ---
 
-## 核心設計：不依賴外部 NuGet 套件
+## 不依賴外部 NuGet 套件
 
-在早期版本中，本模組採用 `OpenccNetLib` 套件進行簡轉繁，但於遊戲載入時會觸發 `System.IO.FileNotFoundException` 錯誤。
+本來這個模組要採用 `OpenccNetLib` 套件進行簡轉繁，礙於遊戲載入時會觸發 `System.IO.FileNotFoundException` 錯誤。
 
-### 錯誤原因
-
-1. **單一 DLL 機制**：遊戲的模組載入機制僅識別「單一主 DLL」，無法自動搜尋並讀取同目錄下的相依性 DLL。
-2. **錯誤隔離缺乏**：單一模組載入失敗會導致整體遊戲無法啟動，無法透過常規的 `AssemblyResolve` 註冊機制進行補救。
-3. **組態檔案干擾**：建置時產生的 `*.deps.json` 等檔案會被遊戲的模組掃描器視為 manifest 解析，進而引發錯誤記錄。
+1. **單一 DLL 機制**：遊戲的模組載入機制僅識別「單一主 DLL」，無法自動搜尋並讀取同目錄下的相依性 DLL。(v108似乎開始支援了?)
+2. **檔案干擾**：建置時產生的 `*.json` 等檔案會被遊戲的掃描器視為 manifest 解析，進而引發錯誤記錄。
 
 ### 解決方案
 
@@ -75,16 +72,17 @@ mods/Sts2ModTranslatorOpenCC/
 3. **覆寫套用**：**不論 `Translation(zhs)` 當前是否有內容，均直接覆蓋**，寫入 `zhs` 覆寫檔並即時套用至遊戲。
 
 > **注意事項**
-> * 若模組本身未內建 `zhs` 原文字源，則無法執行轉換（狀態列將提示原因）。
-> * 本操作具**不可逆性（會直接覆蓋現存檔案）**，執行前會跳出確認提示。建議先透過面板的「Open Folder」功能備份 `overrides` 資料夾。
 > 
-> 
+> * 若模組本身未內建 `zhs` 原文字源，則無法執行轉換（狀態列將提示原因）。另外本身翻譯不完全同理。
 
 ---
 
+> [!Note]
+> 未來會考慮製作成自動化的簡轉繁工具。
+
 ## 自訂字典 (`CustomDict.txt`)
 
-首次執行模組後，系統將於 DLL 同級目錄下自動生成 `CustomDict.txt`。
+首次執行模組後，系統將於 DLL 同級目錄下自動生成 `CustomDict.txt`。(已經加入部分詞彙進去)
 
 * **相容格式**：
 ```text
@@ -104,11 +102,10 @@ mods/Sts2ModTranslatorOpenCC/
 1. **環境確認**：確保原模組已正確放置於 `<STS2>/mods/Sts2ModTranslator/`（須包含 `Sts2ModTranslator.dll`）。
 2. **相依性**：本專案編譯期間無須從外部還原任何執行期 NuGet 套件（`Krafs.Publicizer` 僅供編譯期使用，不會被封裝輸出）。
 3. **編譯指令**：
+
 ```bash
 dotnet build -c Release
-
 ```
-
 
 建置腳本會自動將 `Sts2ModTranslatorOpenCC.dll` 與 `Sts2ModTranslatorOpenCC.json` 複製至 `<STS2>/mods/Sts2ModTranslatorOpenCC/`。
 4. **啟用**：啟動遊戲後，請於模組管理器中同時勾選並啟用這兩個模組才會生效。
