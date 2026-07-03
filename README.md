@@ -2,7 +2,9 @@
 > [!Note]
 > `Sts2ModTranslatorOpenCC` 是專為 `Sts2ModTranslator` 開發的附加外掛模組（僅對其相依）。
 
-本模組於 [Sts2ModTranslator](https://steamcommunity.com/sharedfiles/filedetails/?id=3752522987) 面板的「Install as mod」按鈕旁新增了一顆 **「簡轉繁」** 按鈕。其功能為一鍵將目前選定模組的 `zhs` 覆寫檔內容由簡體中文轉換為繁體中文，直接存檔並套用，同時支援疊加使用者自訂字典（已經內建部分詞彙）。
+本模組於 [Sts2ModTranslator](https://steamcommunity.com/sharedfiles/filedetails/?id=3752522987) 面板的「Install as mod」按鈕旁新增了一顆 **「簡轉繁」** 按鈕。其功能為一鍵將目前選定模組的 `zhs` 覆寫檔內容由簡體中文轉換為繁體中文，會直接存檔並套用，同時支援疊加使用者自訂字典（已經內建部分詞彙），完成後即可關閉視窗。
+
+![Sts2ModTranslator - OpenCC](https://github.com/tents89/sts2MT-plugin/blob/main/assets/1.jpg)
 
 > **架構說明**
 >
