@@ -114,5 +114,6 @@ dotnet build -c Release
 
 | 名稱 | 用途 |
 | ---------- | ---------- |
+| Claude與GPT | 天才程式設計師 |
 | [Sts2ModTranslator](https://github.com/ing-gom/sts2-mod-translator) | 依賴 |
 | [OpenCC](https://github.com/BYVoid/OpenCC) | 利用其字典 |
