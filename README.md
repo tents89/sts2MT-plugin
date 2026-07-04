@@ -23,7 +23,7 @@
 
 本模組將 OpenCC 官方字典原始文字檔（`Dict/*.txt`，基於 Apache-2.0 授權）**直接內嵌至模組的 DLL 中**，並於 `Core/OpenCcEngine.cs` 實作純 C# 的「最長匹配分段轉換引擎」，完全移除了外部 DLL 相依性。
 
-**輸出目錄結構：**
+**目錄結構：**
 
 ```text
 mods/Sts2ModTranslatorOpenCC/
