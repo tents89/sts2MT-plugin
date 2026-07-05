@@ -7,7 +7,7 @@
 ![Sts2ModTranslator - OpenCC](https://github.com/tents89/sts2MT-plugin/blob/main/assets/1.jpg)
 
 **使用方法**
-1. 下載 [Releases](https://github.com/tents89/sts2MT-plugin/releases/tag/v1.0) 
+1. 下載 [Releases](https://github.com/tents89/sts2MT-plugin/releases/tag/v1.0) 並解壓縮至遊戲的mods資料夾中
 2. 啟動遊戲後，請於設置中的Modding按鈕中同時勾選並啟用這兩個模組才會生效。(預設就是會啟用，如果本模組顯示紅色代表你沒有安裝前置模組)
 
 
