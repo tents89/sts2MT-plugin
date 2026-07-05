@@ -6,17 +6,23 @@
 
 ![Sts2ModTranslator - OpenCC](https://github.com/tents89/sts2MT-plugin/blob/main/assets/1.jpg)
 
-> **架構說明**
->
-> 由於目前遊戲僅內建 `zhs`（簡體中文）語系，尚未獨立支援 `zht`（繁體中文），因此本外掛的運作邏輯為：**直接將簡體中文內容轉換為繁體字，並覆寫回原 `zhs` 覆寫檔案中**，而非另建 `zht` 語系。
+**使用方法**
+1. 下載 [Releases](https://github.com/tents89/sts2MT-plugin/releases/tag/v1.0) 
+2. 啟動遊戲後，請於設置中的Modding按鈕中同時勾選並啟用這兩個模組才會生效。(預設就是會啟用，如果本模組顯示紅色代表你沒有安裝前置模組)
+
 
 ---
 
-## 不依賴外部 NuGet 套件
+**架構說明**
 
-本來這個模組要採用 `OpenccNetLib` 套件進行簡轉繁，礙於遊戲載入時會觸發 `System.IO.FileNotFoundException` 錯誤。
+由於目前遊戲僅內建 `zhs`（簡體中文）語系，尚未獨立支援 `zht`（繁體中文），因此本外掛的運作邏輯為：**將簡體中文內容轉換為繁體字，並覆寫回原 `zhs` 覆寫檔案中**，而非另建 `zht` 語系，等到官方支援後我這裡可能才會開始支援這種。
 
-1. **單一 DLL 機制**：遊戲的模組載入機制僅識別「單一主 DLL」，無法自動搜尋並讀取同目錄下的相依性 DLL。(v108似乎開始支援了?)
+
+## 不依賴外部套件
+
+本來這個模組要採用 `OpenccNetLib` 套件進行簡轉繁，礙於遊戲載入時會觸發錯誤。
+
+1. **單一 DLL 機制**：遊戲的模組載入機制僅識別「單一主 DLL」，無法自動搜尋並讀取同目錄下的相依性 DLL。(v108似乎開始支援讀取多個dll了?)
 2. **檔案干擾**：建置時產生的 `*.json` 等檔案會被遊戲的掃描器視為 manifest 解析，進而引發錯誤記錄。
 
 ### 解決方案
@@ -82,7 +88,7 @@ mods/Sts2ModTranslatorOpenCC/
 
 ## 自訂字典 (`CustomDict.txt`)
 
-首次執行模組後，系統將於 DLL 同級目錄下自動生成 `CustomDict.txt`。(已經加入部分詞彙進去)
+首次執行模組後，系統將於 DLL 同級目錄下自動生成 `CustomDict.txt`。(已發布的模組已經加入部分詞彙進去)
 
 * **相容格式**：
 ```text
@@ -90,7 +96,6 @@ mods/Sts2ModTranslatorOpenCC/
 軟件=軟體
 
 ```
-
 
 * **運作邏輯**：此設定是在 OpenCC 標準轉換**完成之後**才執行的全域替換（純字串取代）。適用於修正特定角色名稱、卡牌名稱，或將標準字形轉換為在地化詞彙（例如：將「軟件」修正為「軟體」）。
 * **套用方式**：修改並儲存檔案後，重啟遊戲即可生效。
@@ -108,7 +113,6 @@ dotnet build -c Release
 ```
 
 建置腳本會自動將 `Sts2ModTranslatorOpenCC.dll` 與 `Sts2ModTranslatorOpenCC.json` 複製至 `<STS2>/mods/Sts2ModTranslatorOpenCC/`。
-4. **啟用**：啟動遊戲後，請於模組管理器中同時勾選並啟用這兩個模組才會生效。
 
 ## Credit
 
