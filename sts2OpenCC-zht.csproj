@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Godot.NET.Sdk/4.5.1" InitialTargets="CheckDependencyPaths">
+  <Import Project=".\Sts2PathDiscovery.props" />
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Sts2ModTranslatorOpenCC</RootNamespace>
+    <AssemblyName>sts2OpenCC-zht</AssemblyName>
+    <ModOutputName>sts2OpenCC-zht</ModOutputName>
+    <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
+    <PathMap>$(AppOutputBase)=.\</PathMap>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);MSB3270;CS0436</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(Sts2DataDir)')">
+    <Reference Include="0Harmony">
+      <HintPath>$(Sts2DataDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)/sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <Publicize Include="sts2" IncludeVirtualMembers="false" IncludeCompilerGeneratedMembers="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="BaseLib-StS2-3.3.5\**\*.cs" />
+    <EmbeddedResource Remove="BaseLib-StS2-3.3.5\**\*" />
+    <None Remove="BaseLib-StS2-3.3.5\**\*" />
+    <None Remove="Sts2ModTranslatorOpenCC.json" />
+    <Compile Remove="sts2OpenCC-zht\Ui\TraditionalizePanel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="sts2OpenCC-zht\Dict\STCharacters.txt">
+      <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.STCharacters.txt</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="sts2OpenCC-zht\Dict\STPhrases.txt">
+      <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.STPhrases.txt</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="sts2OpenCC-zht\Dict\TWVariants.txt">
+      <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariants.txt</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="sts2OpenCC-zht\Dict\TWVariantsPhrases.txt">
+      <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariantsPhrases.txt</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sts2OpenCC-zht.json" />
+  </ItemGroup>
+  <Target Name="CheckDependencyPaths">
+    <Error Text=" Slay the Spire 2 data not found at path '$(Sts2DataDir)'" Condition="'$(Sts2DataDir)' == '' or !Exists('$(Sts2DataDir)')" />
+  </Target>
+  <Target Name="CopyToModsFolderOnBuild" AfterTargets="PostBuildEvent">
+    <Message Text="Copying dll + manifest to mods folder." Importance="high" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsPath)$(ModOutputName)/" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\$(AssemblyName).json" DestinationFolder="$(ModsPath)$(ModOutputName)/" />
+    <Copy SourceFiles="sts2OpenCC-zht\Assets\configbutton.png" DestinationFolder="$(ModsPath)$(ModOutputName)\Assets\" />
+  </Target>
+</Project>

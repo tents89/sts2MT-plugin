@@ -66,9 +66,9 @@ public static class OpenCcBridge
             if (!File.Exists(path))
             {
                 File.WriteAllText(path,
-                    "# 自訂簡轉繁字典 — 每行一組，格式：轉換後看到的文字=想換成的文字\n"
-                    + "# 這是在 OpenCC 轉換「完成之後」才套用的找字換字，改完存檔、重啟遊戲\n"
-                    + "# (或重新按一次簡轉繁按鈕重新載入)就會生效。範例（請自行刪改）：\n"
+                    "# 自訂簡轉繁字典 — 每行一組，格式：OpenCC轉換後看到的文字=想換成的文字\n"
+                    + "# 這是在 OpenCC 轉換「完成之後」才套用的找字換字，改完存檔、重啟遊戲(或\n"
+                    + "# 在面板按「重新套用」重新載入)就會生效。範例（請自行刪改）：\n"
                     + "# 軟件=軟體\n",
                     new UTF8Encoding(false));
                 return result;
@@ -92,7 +92,7 @@ public static class OpenCcBridge
         return result.OrderByDescending(p => p.Key.Length).ToList();
     }
 
-    /// <summary>面板上如果之後想加「重新載入字典」按鈕可以呼叫這個，目前沒有 UI 掛勾。</summary>
+    /// <summary>手動重新載入字典檔（面板「重新套用」時一併呼叫，讓改過的 CustomDict.txt 立刻生效）。</summary>
     public static void ReloadCustomDict()
     {
         lock (InitLock) { _customDict = LoadCustomDict(); }

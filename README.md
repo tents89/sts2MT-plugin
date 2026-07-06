@@ -1,123 +1,127 @@
-# Sts2ModTranslator - OpenCC 說明文件
-> [!IMPORTANT]
-> `Sts2ModTranslatorOpenCC` 是專為 `Sts2ModTranslator` 開發的附加外掛模組（僅依賴）。
+# sts2OpenCC-zht
 
-本模組於 [Sts2ModTranslator](https://steamcommunity.com/sharedfiles/filedetails/?id=3752522987) 面板的「Install as mod」按鈕旁新增了一顆 **「簡轉繁」** 按鈕。其功能為一鍵將目前選定模組的 `zhs` 覆寫檔內容由簡體中文轉換為繁體中文，會直接存檔並套用，同時支援疊加使用者自訂字典（已經內建部分詞彙），完成後即可關閉視窗。
+`sts2OpenCC-zht` 是 Slay the Spire 2 的繁體中文轉換模組。模組會在遊戲切換語言時掃描遊戲本體與已載入模組的 `zhs` localization 表格，使用內嵌 OpenCC 字典轉為繁體中文，再套用自訂字典覆寫，最後寫回目前語言資料。
 
-![Sts2ModTranslator - OpenCC](https://github.com/tents89/sts2MT-plugin/blob/main/assets/1.jpg)
+模組不需要其他模組作為執行依賴。
 
-**使用方法**
-1. 下載 [Releases](https://github.com/tents89/sts2MT-plugin/releases/tag/v1.0) 並解壓縮至遊戲的mods資料夾中
-2. 啟動遊戲後，請於設置中的Modding按鈕中同時勾選並啟用這兩個模組才會生效。(預設就是會啟用，如果本模組顯示紅色代表你沒有安裝前置模組)
-
-
----
-
-**架構說明**
-
-由於目前遊戲僅內建 `zhs`（簡體中文）語系，尚未獨立支援 `zht`（繁體中文），因此本外掛的運作邏輯為：**將簡體中文內容轉換為繁體字，並覆寫回原 `zhs` 覆寫檔案中**，而非另建 `zht` 語系，等到官方支援後我這裡可能才會開始支援這種。
-
-
-## 不依賴外部套件
-
-本來這個模組要採用 `OpenccNetLib` 套件進行簡轉繁，礙於遊戲載入時會觸發錯誤。
-
-1. **單一 DLL 機制**：遊戲的模組載入機制僅識別「單一主 DLL」，無法自動搜尋並讀取同目錄下的相依性 DLL。(v108似乎開始支援讀取多個dll了?)
-2. **檔案干擾**：建置時產生的 `*.json` 等檔案會被遊戲的掃描器視為 manifest 解析，進而引發錯誤記錄。
-
-### 解決方案
-
-本模組將 OpenCC 官方字典原始文字檔（`Dict/*.txt`，基於 Apache-2.0 授權）**直接內嵌至模組的 DLL 中**，並於 `Core/OpenCcEngine.cs` 實作純 C# 的「最長匹配分段轉換引擎」，完全移除了外部 DLL 相依性。
-
-**目錄結構：**
+## 架構
 
 ```text
-mods/Sts2ModTranslatorOpenCC/
-├── Sts2ModTranslatorOpenCC.dll   (主程式)
-├── Sts2ModTranslatorOpenCC.json  (唯一的 Manifest)
-└── CustomDict.txt                (首次執行後自動產生)
+MainFile.cs
+    模組入口，讀取設定並套用 Harmony patches。
 
+Core/
+    LangConfig.cs
+      來源與目標語言設定。
+    OpenCcEngine.cs
+      內嵌 OpenCC 字典的純 C# 轉換器。
+    OpenCcBridge.cs
+      轉換入口，負責 OpenCC 轉換與 CustomDict.txt 覆寫。
+    TargetRegistry.cs
+      掃描遊戲本體與已載入模組，判斷是否存在 zhs localization。
+    LocConverter.cs
+      讀取 localization 表格、轉換文字、合併回 LocManager。
+    CacheStore.cs
+      保存版本紀錄與已轉換表格快取。
+    ModSettings.cs
+      保存模組設定。
+    JsonUtil.cs
+      共用 JSON 輸出設定。
+
+Patches/
+    LocManagerSetLanguagePatch.cs
+      在 LocManager.SetLanguage 後自動轉換與套用。
+    MainMenuButtonPatch.cs
+      在主選單加入繁體化入口。
+    SettingsScreenPatch.cs
+      在設定畫面加入繁體化入口。
+    TraditionalizeSubmenuPatch.cs
+      註冊繁體化 submenu 類型。
+
+Ui/
+    TraditionalizeSubmenu.cs
+      目前使用的繁體化管理頁面。
+    NativeUi.cs
+      遊戲風格的按鈕、切換項與 row 元件。
+    NativeScrollContainer.cs
+      符合遊戲 submenu 的捲動容器。
+    FoldableSection.cs
+      可折疊的分類區塊。
+    ConfirmDialog.cs
+      重新套用前的確認對話框。
+
+Dict/
+    STCharacters.txt
+    STPhrases.txt
+    TWVariants.txt
+    TWVariantsPhrases.txt
+      內嵌 OpenCC s2tw 轉換字典。
 ```
 
-專案組態（`csproj`）已明確關閉 `GenerateDependencyFile` 與 `GenerateRuntimeConfigurationFiles`，建置目標（Target）設定為僅複製主 DLL 與 JSON Manifest，確保目錄乾淨。
+## 轉換流程
 
----
+1. `LocManager.SetLanguage` 完成後，模組重新掃描可用目標。
+2. 若目標有 `localization/zhs` 表格，模組讀取原文並產生繁體內容。
+3. 轉換順序為 OpenCC 字典，接著套用 `CustomDict.txt`。
+4. 轉換結果合併回目前語言表格，並寫入 `Cache/` 供之後重用。
+5. 若遊戲本體或模組版本變更，會重新產生對應快取。
 
-## 轉換機制與品質
+## 管理頁面
 
-本模組重現了 OpenCC 官方 `s2tw.json`（標準簡轉繁，僅轉換字形，不做詞彙在地化）的轉換鏈：
+主選單與設定畫面都會提供「繁體化」入口，開啟同一個 submenu。
 
-```
-[簡體文字] 
-   │
-   ▼
-(Pass 1) 轉換為繁體標準字：優先比對 STPhrases (詞語) ──> 備援比對 STCharacters (單字)
-   │
-   ▼
-(Pass 2) 轉換為台灣正體字形：優先比對 TWVariantsPhrases ──> 備援比對 TWVariants
-   │
-   ▼
-(Pass 3) 套用自訂字典
-   │
-   ▼
-[繁體文字輸出]
+頁面內容包含：
 
-```
+- 是否在主選單顯示入口。
+- 遊戲本體。
+- 支援轉換的模組。
+- 不支援轉換的模組與原因。
+- 單一目標重新套用。
+- 全部重新套用。
+- 開啟快取資料夾。
 
-* **演算法**：由左至右掃描，於各位置之字典群組中搜尋最長匹配（Longest Match）。若查無對應則遞補至下一字典；皆無匹配則保留原字輸出。
-* **品質**：轉換結果與官方 OpenCC 基礎函式庫高度一致。少數特殊用字或詞彙差異可透過 `CustomDict.txt` 進行校正。
+管理頁面的按鈕與互動回饋使用遊戲原生 UI 節點與素材，包含 hover、focus、press/release 狀態。
 
----
+## 自訂字典
 
-## 執行流程
+自訂字典位於模組資料夾的 `CustomDict.txt`。格式為每行一組：
 
-於模組語言列表頁面按下「簡轉繁」按鈕後，系統將依序執行以下作業：
-
-1. **讀取原文**：讀取該模組內建的簡體中文原文（即 `Reference(zhs)`，非第三方翻譯包或現存的覆寫檔）。
-2. **文本轉換**：批次進行簡轉繁運算（結合 OpenCC s2tw 規範與 `CustomDict.txt` 自訂字典）。
-3. **覆寫套用**：**不論 `Translation(zhs)` 當前是否有內容，均直接覆蓋**，寫入 `zhs` 覆寫檔並即時套用至遊戲。
-
-> **注意事項**
-> 
-> * 若模組本身未內建 `zhs` 原文字源，則無法執行轉換（狀態列將提示原因）。另外本身翻譯不完全同理。
-
----
-
-> [!Note]
-> 未來會考慮製作成自動化的簡轉繁工具。
-
-## 自訂字典 (`CustomDict.txt`)
-
-首次執行模組後，系統將於 DLL 同級目錄下自動生成 `CustomDict.txt`。(已發布的模組已經加入部分詞彙進去)
-
-* **相容格式**：
 ```text
-# 每行開頭為「#」代表註解
-軟件=軟體
-
+簡體詞=繁體詞
 ```
 
-* **運作邏輯**：此設定是在 OpenCC 標準轉換**完成之後**才執行的全域替換（純字串取代）。適用於修正特定角色名稱、卡牌名稱，或將標準字形轉換為在地化詞彙（例如：將「軟件」修正為「軟體」）。
-* **套用方式**：修改並儲存檔案後，重啟遊戲即可生效。
+空行與 `#` 開頭的行會被忽略。自訂字典會在 OpenCC 轉換後套用，因此可以用來覆寫 OpenCC 的預設結果。
 
----
+## 檔案位置
 
-## 建置與部署
+建置後模組會輸出到：
 
-1. **環境確認**：確保原模組已正確放置於 `<STS2>/mods/Sts2ModTranslator/`（須包含 `Sts2ModTranslator.dll`）。
-2. **相依性**：本專案編譯期間無須從外部還原任何執行期 NuGet 套件（`Krafs.Publicizer` 僅供編譯期使用，不會被封裝輸出）。
-3. **編譯指令**：
+```text
+mods/sts2OpenCC-zht/
+  sts2OpenCC-zht.dll
+  sts2OpenCC-zht.json
+  Assets/
+    configbutton.png
+  CustomDict.txt
+  Settings.json
+  Cache/
+    versions.json
+    __base_game__/{table}.json
+    {modId}/{table}.json
+```
 
-```bash
+`CustomDict.txt`、`Settings.json` 與 `Cache/` 會在執行時依需要建立。
+
+## 建置
+
+```powershell
 dotnet build -c Release
 ```
 
-建置腳本會自動將 `Sts2ModTranslatorOpenCC.dll` 與 `Sts2ModTranslatorOpenCC.json` 複製至 `<STS2>/mods/Sts2ModTranslatorOpenCC/`。
+此專案會複製 `sts2OpenCC-zht.dll`、`sts2OpenCC-zht.json` 與 UI 素材到 Slay the Spire 2 的 `mods/sts2OpenCC-zht/` 目錄。
 
-## Credit
+## 授權與字典來源
 
-| 名稱 | 用途 |
-| ---------- | ---------- |
-| Claude與GPT | 天才程式設計師 |
-| [Sts2ModTranslator](https://github.com/ing-gom/sts2-mod-translator) | 依賴 |
-| [OpenCC](https://github.com/BYVoid/OpenCC) | 利用其字典 |
+內嵌 OpenCC 字典來源與授權資訊請見 `THIRD_PARTY_NOTICES.md`。
+
+實作參考：BaseLib-StS2-3.3.5 與 Sts2ModTranslator。
