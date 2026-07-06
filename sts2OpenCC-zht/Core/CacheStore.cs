@@ -9,7 +9,7 @@ namespace Sts2ModTranslatorOpenCC.Core;
 /// <summary>
 /// 所有持久化資料都只放在「這個模組自己的資料夾」底下，不碰其他模組、也不寫進遊戲本體：
 ///
-///   mods/sts2OpenCC-zht/Cache/
+///   mods/Sts2OpenCC-zht/Cache/
 ///     versions.json              目標id -> 上次轉換時的版本字串
 ///     {targetId}/{table}.json    該目標、該表格轉換後的繁體文字
 ///

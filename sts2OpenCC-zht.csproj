@@ -7,8 +7,8 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Sts2ModTranslatorOpenCC</RootNamespace>
-    <AssemblyName>sts2OpenCC-zht</AssemblyName>
-    <ModOutputName>sts2OpenCC-zht</ModOutputName>
+    <AssemblyName>Sts2OpenCC-zht</AssemblyName>
+    <ModOutputName>Sts2OpenCC-zht</ModOutputName>
     <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
     <PathMap>$(AppOutputBase)=.\</PathMap>
   </PropertyGroup>
@@ -40,24 +40,24 @@
     <EmbeddedResource Remove="BaseLib-StS2-3.3.5\**\*" />
     <None Remove="BaseLib-StS2-3.3.5\**\*" />
     <None Remove="Sts2ModTranslatorOpenCC.json" />
-    <Compile Remove="sts2OpenCC-zht\Ui\TraditionalizePanel.cs" />
+    <Compile Remove="Sts2OpenCC-zht\Ui\TraditionalizePanel.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="sts2OpenCC-zht\Dict\STCharacters.txt">
+    <EmbeddedResource Include="Sts2OpenCC-zht\Dict\STCharacters.txt">
       <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.STCharacters.txt</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="sts2OpenCC-zht\Dict\STPhrases.txt">
+    <EmbeddedResource Include="Sts2OpenCC-zht\Dict\STPhrases.txt">
       <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.STPhrases.txt</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="sts2OpenCC-zht\Dict\TWVariants.txt">
+    <EmbeddedResource Include="Sts2OpenCC-zht\Dict\TWVariants.txt">
       <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariants.txt</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="sts2OpenCC-zht\Dict\TWVariantsPhrases.txt">
+    <EmbeddedResource Include="Sts2OpenCC-zht\Dict\TWVariantsPhrases.txt">
       <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariantsPhrases.txt</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="sts2OpenCC-zht.json" />
+    <None Include="Sts2OpenCC-zht.json" />
   </ItemGroup>
   <Target Name="CheckDependencyPaths">
     <Error Text=" Slay the Spire 2 data not found at path '$(Sts2DataDir)'" Condition="'$(Sts2DataDir)' == '' or !Exists('$(Sts2DataDir)')" />
@@ -66,6 +66,6 @@
     <Message Text="Copying dll + manifest to mods folder." Importance="high" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsPath)$(ModOutputName)/" />
     <Copy SourceFiles="$(MSBuildProjectDirectory)\$(AssemblyName).json" DestinationFolder="$(ModsPath)$(ModOutputName)/" />
-    <Copy SourceFiles="sts2OpenCC-zht\Assets\configbutton.png" DestinationFolder="$(ModsPath)$(ModOutputName)\Assets\" />
+    <Copy SourceFiles="Sts2OpenCC-zht\Assets\configbutton.png" DestinationFolder="$(ModsPath)$(ModOutputName)\Assets\" />
   </Target>
 </Project>

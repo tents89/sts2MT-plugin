@@ -1,8 +1,8 @@
 {
-  "id": "sts2OpenCC-zht",
-  "name": "sts2OpenCC-zht",
-  "author": "your-name",
-  "description": "Converts loaded zhs localization tables to Traditional Chinese using embedded OpenCC dictionaries and optional custom overrides.",
+  "id": "Sts2OpenCC-zht",
+  "name": "Sts2OpenCC-zht",
+  "author": "tsts8989",
+  "description": "自動將簡體文本轉換成繁體中文。Converts loaded zhs localization tables to Traditional Chinese using embedded OpenCC dictionaries and optional custom overrides.",
   "version": "1.0.0",
   "has_pck": false,
   "has_dll": true,

@@ -20,7 +20,7 @@ namespace Sts2ModTranslatorOpenCC;
 [ModInitializer(nameof(Initialize))]
 public class MainFile
 {
-    public const string ModId = "sts2OpenCC-zht";
+    public const string ModId = "Sts2OpenCC-zht";
 
     public static MegaCrit.Sts2.Core.Logging.Logger Logger { get; }
         = new(ModId, MegaCrit.Sts2.Core.Logging.LogType.Generic);
