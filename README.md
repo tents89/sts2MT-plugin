@@ -1,6 +1,6 @@
 # Sts2OpenCC-Zht
 
-**Sts2OpenCC-zht 是 Slay the Spire 2 的繁體中文轉換模組。模組會在遊戲切換語言時掃描遊戲本體與已載入模組的 `zhs` localization 表格，使用內嵌 OpenCC 字典轉為繁體中文，再套用自訂字典覆寫，最後寫回目前語言資料。**
+**Sts2OpenCC-Zht 是 Slay the Spire 2 的繁體中文轉換模組。模組會在遊戲切換語言時掃描遊戲本體與已載入模組的 `zhs` localization 表格，使用內嵌 OpenCC 字典轉為繁體中文，再套用自訂字典覆寫，最後寫回目前語言資料。**
 
 ![image](https://github.com/tents89/sts2MT-plugin/blob/main/png/1.png)
 
@@ -107,7 +107,7 @@ mods/Sts2OpenCC-zht/
 ├── CustomDict.txt
 ├── Settings.json
 ├── Assets/
-│   └── configbutton.png
+│   └── OpenCC_configbutton.png
 └── Cache/
     ├── versions.json
     ├── __base_game__/
