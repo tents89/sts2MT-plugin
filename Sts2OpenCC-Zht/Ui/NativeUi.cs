@@ -292,7 +292,7 @@ internal partial class NativeActionButton : NSettingsButton
             var dllDir = Path.GetDirectoryName(typeof(NativeActionButton).Assembly.Location);
             if (string.IsNullOrEmpty(dllDir)) return null;
 
-            var path = Path.Combine(dllDir, "Assets", "OpenCC_OpenCC_configbutton.png");
+            var path = Path.Combine(dllDir, "Assets", "OpenCC_configbutton.png");
             if (!File.Exists(path)) return null;
 
             var image = Image.LoadFromFile(path);

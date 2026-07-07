@@ -41,13 +41,14 @@
     ├── STPhrases.txt                 # 內嵌 OpenCC s2tw 轉換字典。
     ├── TWVariants.txt                # 內嵌 OpenCC s2tw 轉換字典。
     └── TWVariantsPhrases.txt         # 內嵌 OpenCC s2tw 轉換字典。
+    └── Dict.txt                      # 模組預設覆寫字典。
 ```
 
 ## 轉換流程
 
 1. `LocManager.SetLanguage` 完成後，模組重新掃描可用目標。
 2. 若目標有 `localization/zhs` 表格，模組讀取原文並產生繁體內容。
-3. 轉換順序為 OpenCC 字典，接著套用 `CustomDict.txt`。
+3. 轉換順序為 OpenCC 字典，接著套用 `Dict/Dict.txt`，最後套用 `CustomDict.txt`。
 
 ```
 [簡體文字] 
@@ -56,7 +57,7 @@
 (Pass 1) 轉換為繁體標準字：優先比對 STPhrases (詞語) ──> 備援比對 STCharacters (單字)
    │
    ▼
-(Pass 2) 轉換為台灣正體字形：優先比對 TWVariantsPhrases ──> 備援比對 TWVariants
+(Pass 2) 轉換為台灣正體字形：優先比對 TWVariantsPhrases ──> 備援比對 TWVariants ──> 模組預設覆寫字典
    │
    ▼
 (Pass 3) 套用自訂字典
@@ -87,7 +88,7 @@
 
 ## 自訂字典
 
-自訂字典位於模組資料夾的 `CustomDict.txt`。格式為每行一組：
+`CustomDict.txt` 位於模組資料夾，會在執行時自動建立，並最後套用。兩者格式相同，每行一組：
 
 ```text
 視頻=影片
@@ -101,9 +102,9 @@
 建置後模組會輸出到：
 
 ```text
-mods/Sts2OpenCC-zht/
-├── Sts2OpenCC-zht.dll
-├── Sts2OpenCC-zht.json
+mods/Sts2OpenCC-Zht/
+├── Sts2OpenCC-Zht.dll
+├── Sts2OpenCC-Zht.json
 ├── CustomDict.txt
 ├── Settings.json
 ├── Assets/
@@ -124,7 +125,7 @@ mods/Sts2OpenCC-zht/
 dotnet build -c Release
 ```
 
-編譯後會自動複製 `Sts2OpenCC-zht.dll`、`Sts2OpenCC-zht.json` 與 UI 素材到 Slay the Spire 2 的 `mods/Sts2OpenCC-zht/` 目錄。
+編譯後會自動複製 `Sts2OpenCC-Zht.dll`、`Sts2OpenCC-Zht.json` 與 UI 素材到 Slay the Spire 2 的 `mods/Sts2OpenCC-Zht/` 目錄。
 
 ## Credit
 

@@ -55,6 +55,9 @@
     <EmbeddedResource Include="Sts2OpenCC-Zht\Dict\TWVariantsPhrases.txt">
       <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.TWVariantsPhrases.txt</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Sts2OpenCC-Zht\Dict\Dict.txt">
+      <LogicalName>Sts2ModTranslatorOpenCC.OpenCcDict.Dict.txt</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Sts2OpenCC-Zht.json" />
